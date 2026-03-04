@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Performance Crash Course</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: #2a2a40;
+    --accent: #00ffaa;
+    --accent2: #ff6b35;
+    --accent3: #7c6bff;
+    --text: #e8e8f0;
+    --muted: #888899;
+    --good: #00d68f;
+    --warn: #ffb347;
+    --bad: #ff4f4f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR NAV */
+  .layout { display: flex; min-height: 100vh; }
+
+  nav {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 2rem 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .nav-logo {
+    padding: 0 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+
+  .nav-logo .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .nav-logo h1 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-top: 0.3rem;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1.5rem;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 400;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+
+  nav a:hover, nav a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(0,255,170,0.05);
+  }
+
+  nav .nav-section-label {
+    padding: 1.2rem 1.5rem 0.4rem;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* MAIN */
+  main {
+    flex: 1;
+    padding: 3rem 3.5rem;
+    max-width: 900px;
+  }
+
+  section { margin-bottom: 5rem; }
+
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    max-width: 600px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card p { color: var(--muted); font-size: 0.88rem; }
+
+  /* STEPS */
+  .steps { counter-reset: step; }
+
+  .step {
+    display: flex;
+    gap: 1.2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+
+  .step::before {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 38px;
+    bottom: -18px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .step:last-child::before { display: none; }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    counter-increment: step;
+  }
+
+  .step-body { flex: 1; padding-top: 0.4rem; }
+  .step-body h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .step-body p { color: var(--muted); font-size: 0.85rem; }
+
+  .step-body .shortcut {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent3);
+    margin: 0.2rem 0.1rem;
+  }
+
+  .step-img {
+    margin-top: 0.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .step-img .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    margin-bottom: 0.4rem;
+  }
+
+  /* METRICS */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+  }
+
+  .metric-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+  }
+
+  .metric-full {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-thresholds {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .threshold {
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .threshold.good { background: rgba(0,214,143,0.15); color: var(--good); }
+  .threshold.warn { background: rgba(255,179,71,0.15); color: var(--warn); }
+  .threshold.bad  { background: rgba(255,79,79,0.15);  color: var(--bad); }
+
+  .metric-desc { color: var(--muted); font-size: 0.82rem; }
+
+  /* FLAME CHART */
+  .flame-demo {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  .flame-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.8rem; }
+
+  .flame-track { margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem; }
+  .flame-track-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); width: 80px; text-align: right; flex-shrink: 0; }
+  .flame-bars { flex: 1; position: relative; height: 20px; }
+
+  .flame-bar {
+    position: absolute;
+    height: 100%;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 0.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  /* IMPROVEMENTS */
+  .improvement {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .improvement-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .improvement-header:hover { background: rgba(255,255,255,0.02); }
+
+  .impact-badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .impact-badge.high { background: rgba(0,255,170,0.15); color: var(--accent); }
+  .impact-badge.med  { background: rgba(255,107,53,0.15); color: var(--accent2); }
+  .impact-badge.low  { background: rgba(124,107,255,0.15); color: var(--accent3); }
+
+  .improvement-title { font-weight: 700; font-size: 0.9rem; flex: 1; }
+  .improvement-toggle { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; }
+  .improvement.open .improvement-toggle { transform: rotate(90deg); }
+
+  .improvement-body {
+    display: none;
+    padding: 0 1.2rem 1.2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .improvement.open .improvement-body { display: block; }
+
+  .improvement-body p { color: var(--muted); font-size: 0.85rem; margin: 0.8rem 0 0.6rem; }
+
+  .code-block {
+    background: #0d0d16;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #c9d1d9;
+    overflow-x: auto;
+    margin: 0.6rem 0;
+    white-space: pre;
+    line-height: 1.7;
+  }
+
+  .code-block .kw { color: #ff79c6; }
+  .code-block .fn { color: #50fa7b; }
+  .code-block .str { color: #f1fa8c; }
+  .code-block .cm { color: #6272a4; }
+  .code-block .num { color: #bd93f9; }
+
+  /* BEFORE/AFTER */
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+
+  .ba-panel { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .ba-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; font-family: 'JetBrains Mono', monospace; }
+  .ba-label.before { color: var(--bad); }
+  .ba-label.after  { color: var(--good); }
+  .ba-panel code { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--muted); }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .check-box.checked { background: var(--accent); border-color: var(--accent); }
+  .check-box.checked::after { content: '✓'; color: #000; font-size: 0.7rem; font-weight: 700; }
+  .checklist li.done { color: var(--border); text-decoration: line-through; }
+
+  /* WATERFALL */
+  .waterfall { margin: 1rem 0; }
+  .wf-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 3px; }
+  .wf-name { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted); width: 140px; text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wf-track { flex: 1; height: 16px; position: relative; }
+  .wf-bar { position: absolute; height: 100%; border-radius: 2px; }
+  .wf-time { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-left: 4px; }
+
+  /* HIGHLIGHT */
+  .highlight-box {
+    border-left: 3px solid var(--accent);
+    background: rgba(0,255,170,0.04);
+    padding: 1rem 1.2rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    font-size: 0.87rem;
+    color: var(--muted);
+  }
+
+  .highlight-box.warn { border-color: var(--warn); background: rgba(255,179,71,0.04); }
+  .highlight-box.info { border-color: var(--accent3); background: rgba(124,107,255,0.04); }
+
+  /* SCORE */
+  .score-demo {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+
+  .score-circle {
+    text-align: center;
+  }
+
+  .circle-svg { display: block; }
+
+  .score-label { font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; font-family: 'JetBrains Mono', monospace; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  th { text-align: left; padding: 0.6rem 0.8rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--muted); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td:first-child { color: var(--text); font-weight: 600; }
+
+  /* MISC */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pill { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1rem 0.45rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--accent3); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    nav { display: none; }
+    main { padding: 2rem 1.2rem; }
+    .metrics-grid, .before-after { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav>
+  <div class="nav-logo">
+    <div class="tag">// crash course</div>
+    <h1>Web Performance</h1>
+  </div>
+
+  <div class="nav-section-label">Phase 1 — Measure</div>
+  <a href="#phase1">🔬 Open DevTools</a>
+  <a href="#record">⏺ Record a Profile</a>
+  <a href="#metrics">📊 Core Web Vitals</a>
+  <a href="#flamechart">🔥 Flame Chart</a>
+  <a href="#network">🌐 Network Tab</a>
+
+  <div class="nav-section-label">Phase 2 — Diagnose</div>
+  <a href="#bottlenecks">🐛 Spot Bottlenecks</a>
+  <a href="#react">⚛️ React Specifics</a>
+
+  <div class="nav-section-label">Phase 3 — Fix</div>
+  <a href="#improvements">🛠 Improvements</a>
+  <a href="#bundleopt">📦 Bundle Optimization</a>
+
+  <div class="nav-section-label">Phase 4 — Verify</div>
+  <a href="#verify">✅ Measure Again</a>
+  <a href="#checklist">📋 Final Checklist</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <!-- INTRO -->
+  <section style="margin-bottom:3rem;">
+    <div class="section-number">// intro</div>
+    <h2>Web Performance<br>Crash Course</h2>
+    <p class="section-desc">You have a React app. We'll measure its performance, understand what's slow, fix it, and verify improvement — step by step.</p>
+
+    <div class="highlight-box info">
+      <strong>The loop:</strong> Measure → Diagnose → Fix → Verify. Never guess. Always profile first.
+    </div>
+
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1.2rem;">
+      <div class="card" style="flex:1; min-width:180px;">
+        <div class="card-title">🔬 Phase 1</div>
+        <p>Open DevTools and record a performance profile of your app</p>
+      </div>
+      <div class="card" style="flex:1; min-width:180px;">
+        <div class="card-title">🔍 Phase 2</div>
+        <p>Read the flame chart, network waterfall, and identify bottlenecks</p>
+      </div>
+      <div class="card" style="flex:1; min-width:180px;">
+        <div class="card-title">🛠 Phase 3</div>
+        <p>Apply targeted fixes — code splitting, memoization, lazy loading</p>
+      </div>
+      <div class="card" style="flex:1; min-width:180px;">
+        <div class="card-title">✅ Phase 4</div>
+        <p>Re-profile and compare. Confirm your fixes actually worked</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1: OPEN DEVTOOLS -->
+  <section id="phase1">
+    <div class="section-number">// phase 1 — measure</div>
+    <h2>Opening DevTools &<br>Setting Up</h2>
+    <p class="section-desc">Before recording, set up Chrome for accurate results. Your dev machine is fast — we need to simulate a real user's device.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Open DevTools</h4>
+          <p>Right-click anywhere on your page → <strong>Inspect</strong>, or use keyboard:</p>
+          <span class="shortcut">F12</span> or <span class="shortcut">Cmd+Option+I</span> (Mac) or <span class="shortcut">Ctrl+Shift+I</span> (Windows)
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Navigate to the Performance tab</h4>
+          <p>Click <strong>"Performance"</strong> in the DevTools tab bar. If you don't see it, click the <span class="pill">&gt;&gt;</span> overflow menu.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Enable CPU throttling — CRITICAL step</h4>
+          <p>At the top of the Performance panel, find the <strong>CPU dropdown</strong>. Set it to <strong>4x slowdown</strong> (or 6x for mobile simulation). Your dev machine has a fast CPU — users don't. This makes slow code visible.</p>
+          <div class="step-img">
+            <div class="label">Where to find it</div>
+            Performance tab → top toolbar → CPU: No throttling → change to <strong>4x slowdown</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Enable Network throttling (optional but recommended)</h4>
+          <p>In the <strong>Network panel</strong>, find the throttling dropdown (says "No throttling"). Set to <strong>Fast 3G</strong> or <strong>Slow 3G</strong> to simulate real network conditions. This reveals load-order issues.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Use Incognito / Private Window</h4>
+          <p>Extensions distort profiles. Open your app in a <strong>Private/Incognito</strong> window with no extensions, then open DevTools there. This gives clean, uncontaminated results.</p>
+          <span class="shortcut">Cmd+Shift+N</span> (Mac) or <span class="shortcut">Ctrl+Shift+N</span> (Windows)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECORD -->
+  <section id="record">
+    <div class="section-number">// phase 1 — record</div>
+    <h2>Recording a<br>Performance Profile</h2>
+    <p class="section-desc">There are two recording modes. Choose the right one for what you're measuring.</p>
+
+    <div class="metrics-grid">
+      <div class="card">
+        <div class="card-title" style="color:var(--accent)">⏺ Record button</div>
+        <p>Click the circle button, interact with your app (scroll, click, navigate), then stop. <strong>Best for:</strong> interactions, animations, clicking a button that feels slow.</p>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--accent2)">🔄 Reload button</div>
+        <p>Click the reload icon — it records page load from scratch. <strong>Best for:</strong> measuring initial load time, Time to Interactive, paint metrics.</p>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>For initial load performance</h4>
+          <p>Click the <strong>⟳ reload icon</strong> (not the circle). DevTools will reload the page and record everything from the first byte until the page becomes interactive. Stop after 5–10 seconds.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>For interaction performance</h4>
+          <p>Click the <strong>⏺ record button</strong>. Then perform the interaction you want to profile (e.g., type in a search box, click a button, scroll a list). Click Stop after 2–5 seconds.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Keep recordings short</h4>
+          <p>3–10 seconds is ideal. Longer recordings become huge files that are slow to analyze. One action at a time = easier to pinpoint what's slow.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="section-number">// phase 1 — understand</div>
+    <h2>Core Web Vitals<br>& What They Mean</h2>
+    <p class="section-desc">These are the metrics Google uses to measure real user experience. Know what you're looking at before reading a profile.</p>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-name">LCP</div>
+        <div class="metric-full">Largest Contentful Paint</div>
+        <div class="metric-thresholds">
+          <span class="threshold good">✓ &lt; 2.5s</span>
+          <span class="threshold warn">~ 2.5–4s</span>
+          <span class="threshold bad">✗ &gt; 4s</span>
+        </div>
+        <div class="metric-desc">When does the biggest visible element (hero image, heading) finish rendering? This is the user's perception of "it loaded."</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-name">INP</div>
+        <div class="metric-full">Interaction to Next Paint</div>
+        <div class="metric-thresholds">
+          <span class="threshold good">✓ &lt; 200ms</span>
+          <span class="threshold warn">~ 200–500ms</span>
+          <span class="threshold bad">✗ &gt; 500ms</span>
+        </div>
+        <div class="metric-desc">How fast does the page visually respond when the user clicks/taps? Slow = the JS main thread is blocked.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-name">CLS</div>
+        <div class="metric-full">Cumulative Layout Shift</div>
+        <div class="metric-thresholds">
+          <span class="threshold good">✓ &lt; 0.1</span>
+          <span class="threshold warn">~ 0.1–0.25</span>
+          <span class="threshold bad">✗ &gt; 0.25</span>
+        </div>
+        <div class="metric-desc">Do elements jump around as the page loads? Images without dimensions, ads injecting late — all cause layout shift.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-name">FCP</div>
+        <div class="metric-full">First Contentful Paint</div>
+        <div class="metric-thresholds">
+          <span class="threshold good">✓ &lt; 1.8s</span>
+          <span class="threshold warn">~ 1.8–3s</span>
+          <span class="threshold bad">✗ &gt; 3s</span>
+        </div>
+        <div class="metric-desc">When does the browser first paint anything (text, image, SVG)? A fast FCP reduces the "blank white page" perception.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-name">TBT</div>
+        <div class="metric-full">Total Blocking Time</div>
+        <div class="metric-thresholds">
+          <span class="threshold good">✓ &lt; 200ms</span>
+          <span class="threshold warn">~ 200–600ms</span>
+          <span class="threshold bad">✗ &gt; 600ms</span>
+        </div>
+        <div class="metric-desc">Total time JS tasks blocked the main thread for 50ms+. High TBT = your page feels frozen. Heavily correlated with INP.</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-name">TTI</div>
+        <div class="metric-full">Time to Interactive</div>
+        <div class="metric-thresholds">
+          <span class="threshold good">✓ &lt; 3.8s</span>
+          <span class="threshold warn">~ 3.8–7.3s</span>
+          <span class="threshold bad">✗ &gt; 7.3s</span>
+        </div>
+        <div class="metric-desc">When is the page fully interactive and consistently responding to inputs? Before this, clicks might be ignored or delayed.</div>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <strong>Where to see these in DevTools:</strong> In the Performance tab timeline, look for the colored vertical lines labeled FCP, LCP etc. In Lighthouse (separate tab), you get all scores at once.
+    </div>
+  </section>
+
+  <!-- FLAME CHART -->
+  <section id="flamechart">
+    <div class="section-number">// phase 1 — read</div>
+    <h2>Reading the<br>Flame Chart</h2>
+    <p class="section-desc">The flame chart is the most powerful (and most confusing) part of the Performance panel. Here's how to decode it.</p>
+
+    <div class="flame-demo">
+      <div class="flame-label">Example flame chart — hover to understand</div>
+
+      <div class="flame-track">
+        <div class="flame-track-label">Main</div>
+        <div class="flame-bars" style="height:26px; position:relative;">
+          <div class="flame-bar" style="left:0%;width:100%;background:#ff6b35;color:#000;font-size:0.6rem;">Long Task (287ms) ⚠️</div>
+        </div>
+      </div>
+      <div class="flame-track">
+        <div class="flame-track-label"></div>
+        <div class="flame-bars" style="height:22px; position:relative;">
+          <div class="flame-bar" style="left:0%;width:45%;background:#7c6bff;color:#fff;">App.render()</div>
+          <div class="flame-bar" style="left:46%;width:30%;background:#7c6bff;color:#fff;">ProductList()</div>
+          <div class="flame-bar" style="left:77%;width:22%;background:#5a5acc;color:#fff;">useEffect</div>
+        </div>
+      </div>
+      <div class="flame-track">
+        <div class="flame-track-label"></div>
+        <div class="flame-bars" style="height:22px; position:relative;">
+          <div class="flame-bar" style="left:0%;width:20%;background:#4a8acc;color:#fff;font-size:0.55rem;">filterProducts()</div>
+          <div class="flame-bar" style="left:21%;width:24%;background:#4a8acc;color:#fff;font-size:0.55rem;">sortItems(3000)</div>
+          <div class="flame-bar" style="left:46%;width:30%;background:#cc4a7a;color:#fff;font-size:0.55rem;">ProductCard ×200</div>
+        </div>
+      </div>
+      <div class="flame-track">
+        <div class="flame-track-label">Paint</div>
+        <div class="flame-bars" style="height:16px; position:relative;">
+          <div class="flame-bar" style="left:0%;width:10%;background:#00d68f;color:#000;font-size:0.55rem;">Paint</div>
+          <div class="flame-bar" style="left:46%;width:25%;background:#00d68f;color:#000;font-size:0.55rem;">Composite</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>X-axis = time, Y-axis = call stack</h4>
+          <p>Wide bars = long execution time. Tall stacks = deep function nesting. <strong>You want short, flat bars.</strong> A bar that spans the whole width is a problem.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Look for red "Long Tasks" triangles</h4>
+          <p>Any task over <strong>50ms</strong> blocks the main thread. Chrome marks these with a red corner. These are your primary enemies — the user's clicks are queued behind them.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Click on a bar to inspect it</h4>
+          <p>Click any bar in the flame chart. The Summary panel below shows: <strong>Self time</strong> (time in this function) vs <strong>Total time</strong> (including children). High self time = the function itself is slow. Low self time but high total = the children are slow.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Find the widest bar at the bottom</h4>
+          <p>The bottom of the stack = the leaf functions = where time is actually being spent. Find the widest bar near the bottom — that's your target.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Use the "Bottom-Up" tab</h4>
+          <p>Below the flame chart, click <strong>"Bottom-Up"</strong>. This sorts functions by total time, revealing the biggest time sinks regardless of call depth. This is often faster than reading the flame chart directly.</p>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <tr>
+        <th>Color in DevTools</th>
+        <th>What it means</th>
+        <th>Significance</th>
+      </tr>
+      <tr>
+        <td>🟡 Yellow</td>
+        <td>JavaScript execution</td>
+        <td>Your app code, library code</td>
+      </tr>
+      <tr>
+        <td>🟣 Purple</td>
+        <td>Rendering / Layout</td>
+        <td>Style recalculation, reflow</td>
+      </tr>
+      <tr>
+        <td>🟢 Green</td>
+        <td>Painting</td>
+        <td>Pixels drawn to screen</td>
+      </tr>
+      <tr>
+        <td>🔵 Blue</td>
+        <td>Parsing HTML/CSS</td>
+        <td>Initial page load parsing</td>
+      </tr>
+      <tr>
+        <td>🔴 Red corner</td>
+        <td>Long Task marker</td>
+        <td>Immediate problem — investigate</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- NETWORK -->
+  <section id="network">
+    <div class="section-number">// phase 1 — network</div>
+    <h2>Network Tab &<br>Waterfall Analysis</h2>
+    <p class="section-desc">Switch to the Network tab to see every resource your app loads, when, and how long it takes.</p>
+
+    <div class="waterfall">
+      <div class="flame-label">Example network waterfall</div>
+      <div class="wf-row">
+        <div class="wf-name">index.html</div>
+        <div class="wf-track"><div class="wf-bar" style="left:0%;width:5%;background:#4a8acc;"></div><span class="wf-time" style="margin-left:6%">48ms</span></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-name">main.chunk.js</div>
+        <div class="wf-track"><div class="wf-bar" style="left:5%;width:18%;background:#ff6b35;"></div><span class="wf-time" style="margin-left:24%">1.8MB ⚠️</span></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-name">vendor.chunk.js</div>
+        <div class="wf-track"><div class="wf-bar" style="left:5%;width:25%;background:#ff6b35;"></div><span class="wf-time" style="margin-left:31%">2.4MB ⚠️</span></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-name">styles.css</div>
+        <div class="wf-track"><div class="wf-bar" style="left:5%;width:6%;background:#7c6bff;"></div><span class="wf-time" style="margin-left:12%">340ms</span></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-name">hero-image.jpg</div>
+        <div class="wf-track"><div class="wf-bar" style="left:23%;width:15%;background:#00d68f;"></div><span class="wf-time" style="margin-left:39%">890ms</span></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-name">api/products</div>
+        <div class="wf-track"><div class="wf-bar" style="left:30%;width:8%;background:#ffb347;"></div><span class="wf-time" style="margin-left:39%">620ms</span></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-name">font.woff2</div>
+        <div class="wf-track"><div class="wf-bar" style="left:5%;width:10%;background:#5a5acc;"></div><span class="wf-time" style="margin-left:16%">240ms</span></div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Sort by Size — find bloated files</h4>
+          <p>Click the <strong>Size</strong> column header to sort. Anything over <strong>500KB</strong> deserves scrutiny. A vendor.js of 2MB+ is a red flag — it's all downloaded before your app can run.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Look at the waterfall column</h4>
+          <p>Each bar shows TTFB (waiting, in lighter color) vs Download (darker). Long light bars = slow server. Long dark bars = large file. Bars that start late = render-blocking predecessors.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Check the summary bar at the bottom</h4>
+          <p>At the bottom of the Network panel: <strong>X requests | X MB transferred | X MB resources | Finish: Xs | DOMContentLoaded | Load</strong>. These are your headline numbers.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Filter by type</h4>
+          <p>Click <strong>JS</strong> in the filter bar to see only JavaScript. Compare that to <strong>Img</strong> — often images are the biggest culprits. Check <strong>Font</strong> too — web fonts can block rendering.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTTLENECKS -->
+  <section id="bottlenecks">
+    <div class="section-number">// phase 2 — diagnose</div>
+    <h2>Spotting Common<br>Bottlenecks</h2>
+    <p class="section-desc">Now that you can read the tools, here's what to actually look for — the patterns that appear in almost every slow React app.</p>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title" style="color:var(--bad)">⚠️ Symptom: Long Task on every keystroke</div>
+      <p><strong>What you'll see:</strong> In the flame chart, a wide yellow JS bar appears every time you type. <strong>Cause:</strong> A filter/search function is re-running on every render without memoization.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title" style="color:var(--bad)">⚠️ Symptom: Massive initial JS payload</div>
+      <p><strong>What you'll see:</strong> In Network, a huge vendor.js or main.js. In Performance, a long yellow parse+compile block before FCP. <strong>Cause:</strong> No code splitting — entire app is shipped as one bundle.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title" style="color:var(--bad)">⚠️ Symptom: Layout thrashing (purple spikes)</div>
+      <p><strong>What you'll see:</strong> Alternating yellow (JS) and purple (layout) bars in rapid succession. <strong>Cause:</strong> Code reads layout properties (offsetHeight, getBoundingClientRect) then writes CSS in a loop, forcing the browser to recalculate layout repeatedly.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title" style="color:var(--bad)">⚠️ Symptom: Component re-rendering excessively</div>
+      <p><strong>What you'll see:</strong> In React DevTools Profiler, a component lights up on every parent render even when its props didn't change. <strong>Cause:</strong> Missing React.memo, new object/array references on every render.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:var(--bad)">⚠️ Symptom: High CLS score</div>
+      <p><strong>What you'll see:</strong> In Performance timeline, the CLS marker shows shifts. Elements jump as images/ads load. <strong>Cause:</strong> Images without explicit width/height, dynamically injected content above existing content.</p>
+    </div>
+  </section>
+
+  <!-- REACT SPECIFICS -->
+  <section id="react">
+    <div class="section-number">// phase 2 — react</div>
+    <h2>React DevTools<br>Profiler</h2>
+    <p class="section-desc">Install the React DevTools extension. It adds a Profiler tab that shows exactly which components re-rendered and why.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Install React DevTools</h4>
+          <p>Install from <strong>Chrome Web Store → "React Developer Tools"</strong>. Once installed, DevTools gains a <strong>⚛ Components</strong> and <strong>⚛ Profiler</strong> tab.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Enable "Highlight updates when components render"</h4>
+          <p>In the ⚛ Components tab → click the gear icon → check <strong>"Highlight updates when components render"</strong>. Now, every time a component re-renders, it flashes. Interact with your app and watch what flashes.</p>
+          <div class="highlight-box warn">If your whole page flashes green on every click, you have a re-rendering problem.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Record a Profiler session</h4>
+          <p>Go to the <strong>⚛ Profiler</strong> tab. Click the record button, perform an interaction (click a button, type in a field), stop. You'll see a flame chart of React component renders with exact timing.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Look at the "Ranked" chart</h4>
+          <p>Switch to the <strong>Ranked</strong> chart view — it sorts components by render time, longest first. The components at the top are your bottlenecks.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Check "Why did this render?"</h4>
+          <p>In Profiler settings, enable <strong>"Record why each component rendered"</strong>. Click a component bar → the detail panel shows: "Props changed: items", "State changed: count", or "Parent re-rendered". This tells you exactly what to fix.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPROVEMENTS -->
+  <section id="improvements">
+    <div class="section-number">// phase 3 — fix</div>
+    <h2>Performance<br>Improvements</h2>
+    <p class="section-desc">Targeted fixes for the most common React performance issues. Each is expandable with code examples.</p>
+
+    <!-- 1 -->
+    <div class="improvement" id="imp1">
+      <div class="improvement-header" onclick="toggleImp('imp1')">
+        <span class="impact-badge high">High Impact</span>
+        <span class="improvement-title">Code Splitting with React.lazy()</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>The default Create React App / Vite setup ships all your code in one bundle. Code splitting breaks it into chunks that load on demand. <strong>Impact:</strong> Can reduce initial JS by 50–80%.</p>
+        <div class="before-after">
+          <div class="ba-panel">
+            <div class="ba-label before">⚠ Before — one huge bundle</div>
+            <code><pre>import Dashboard from './Dashboard';
+import Settings from './Settings';
+import Analytics from './Analytics';
+// All loaded upfront, even if user
+// never visits Settings or Analytics</pre></code>
+          </div>
+          <div class="ba-panel">
+            <div class="ba-label after">✓ After — split by route</div>
+            <code><pre>const Dashboard = lazy(() => import('./Dashboard'));
+const Settings = lazy(() => import('./Settings'));
+const Analytics = lazy(() => import('./Analytics'));
+// Each route loads only when visited</pre></code>
+          </div>
+        </div>
+        <div class="code-block"><span class="kw">import</span> { <span class="fn">lazy</span>, Suspense } <span class="kw">from</span> <span class="str">'react'</span>;
+
+<span class="cm">// Wrap lazy imports with Suspense</span>
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">return</span> (
+    &lt;Suspense fallback={&lt;div&gt;Loading...&lt;/div&gt;}&gt;
+      &lt;Routes&gt;
+        &lt;Route path=<span class="str">"/"</span>       element={&lt;Dashboard /&gt;} /&gt;
+        &lt;Route path=<span class="str">"/settings"</span> element={&lt;Settings /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Suspense&gt;
+  );
+}</div>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="improvement" id="imp2">
+      <div class="improvement-header" onclick="toggleImp('imp2')">
+        <span class="impact-badge high">High Impact</span>
+        <span class="improvement-title">React.memo + useMemo + useCallback</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>By default, React re-renders a component every time its parent renders — even if the component's props didn't change. Memoization prevents unnecessary re-renders.</p>
+        <div class="code-block"><span class="cm">// React.memo — skip re-render if props unchanged</span>
+<span class="kw">const</span> ProductCard = React.<span class="fn">memo</span>(({ product }) => {
+  <span class="kw">return</span> &lt;div&gt;{product.name}&lt;/div&gt;;
+});
+
+<span class="cm">// useMemo — cache expensive computation</span>
+<span class="kw">const</span> filteredProducts = <span class="fn">useMemo</span>(() => {
+  <span class="kw">return</span> products.<span class="fn">filter</span>(p => p.price &gt; minPrice);
+}, [products, minPrice]); <span class="cm">// only recompute when these change</span>
+
+<span class="cm">// useCallback — stable function reference for child props</span>
+<span class="kw">const</span> handleDelete = <span class="fn">useCallback</span>((id) => {
+  <span class="fn">setItems</span>(prev => prev.<span class="fn">filter</span>(i => i.id !== id));
+}, []); <span class="cm">// stable reference — won't trigger child re-render</span></div>
+        <div class="highlight-box warn">Don't memoize everything — it has overhead too. Use it when: a component renders often AND is expensive to render, OR when you pass functions as props to memoized children.</div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="improvement" id="imp3">
+      <div class="improvement-header" onclick="toggleImp('imp3')">
+        <span class="impact-badge high">High Impact</span>
+        <span class="improvement-title">Virtualize Long Lists</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>Rendering 500 DOM nodes when only 20 are visible is a massive waste. Virtualization renders only the visible rows — the rest are virtual. Use <strong>@tanstack/react-virtual</strong> or <strong>react-window</strong>.</p>
+        <div class="code-block"><span class="kw">import</span> { <span class="fn">useVirtualizer</span> } <span class="kw">from</span> <span class="str">'@tanstack/react-virtual'</span>;
+
+<span class="kw">function</span> <span class="fn">ProductList</span>({ items }) {
+  <span class="kw">const</span> parentRef = <span class="fn">useRef</span>(null);
+
+  <span class="kw">const</span> virtualizer = <span class="fn">useVirtualizer</span>({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => <span class="num">60</span>, <span class="cm">// row height in px</span>
+  });
+
+  <span class="kw">return</span> (
+    &lt;div ref={parentRef} style={{ height: <span class="str">'600px'</span>, overflow: <span class="str">'auto'</span> }}&gt;
+      &lt;div style={{ height: virtualizer.getTotalSize() }}&gt;
+        {virtualizer.<span class="fn">getVirtualItems</span>().<span class="fn">map</span>(row => (
+          &lt;div key={row.key} style={{ transform: `translateY(${row.start}px)` }}&gt;
+            &lt;ProductCard item={items[row.index]} /&gt;
+          &lt;/div&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="improvement" id="imp4">
+      <div class="improvement-header" onclick="toggleImp('imp4')">
+        <span class="impact-badge med">Med Impact</span>
+        <span class="improvement-title">Image Optimization</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>Images are often the biggest payload. Use modern formats, right sizes, and lazy loading.</p>
+        <div class="code-block"><span class="cm">// Before: a 2MB JPEG served to everyone</span>
+&lt;img src=<span class="str">"/hero.jpg"</span> /&gt;
+
+<span class="cm">// After: WebP + fallback + lazy + correct dimensions</span>
+&lt;picture&gt;
+  &lt;source srcSet=<span class="str">"/hero.webp"</span> type=<span class="str">"image/webp"</span> /&gt;
+  &lt;img
+    src=<span class="str">"/hero.jpg"</span>
+    width=<span class="str">"1200"</span>
+    height=<span class="str">"600"</span>
+    loading=<span class="str">"lazy"</span>      <span class="cm">// browser-native lazy load</span>
+    decoding=<span class="str">"async"</span>
+    alt=<span class="str">"Hero image"</span>
+  /&gt;
+&lt;/picture&gt;
+
+<span class="cm">// For above-fold images: use loading="eager" + fetchpriority="high"</span>
+&lt;img src=<span class="str">"/hero.jpg"</span> fetchpriority=<span class="str">"high"</span> /&gt;</div>
+        <p>Also: run images through <strong>Squoosh</strong> or <strong>Sharp</strong> to compress. WebP is typically 25–35% smaller than JPEG at the same quality.</p>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="improvement" id="imp5">
+      <div class="improvement-header" onclick="toggleImp('imp5')">
+        <span class="impact-badge med">Med Impact</span>
+        <span class="improvement-title">Debounce Expensive Operations</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>Search/filter inputs that run on every keystroke cause constant re-renders. Debounce delays execution until the user stops typing.</p>
+        <div class="code-block"><span class="kw">import</span> { <span class="fn">useDeferredValue</span>, useState } <span class="kw">from</span> <span class="str">'react'</span>;
+
+<span class="cm">// Option 1: React's built-in useDeferredValue</span>
+<span class="kw">function</span> <span class="fn">SearchPage</span>() {
+  <span class="kw">const</span> [query, <span class="fn">setQuery</span>] = <span class="fn">useState</span>(<span class="str">''</span>);
+  <span class="kw">const</span> deferredQuery = <span class="fn">useDeferredValue</span>(query);
+  <span class="cm">// deferredQuery lags behind — search runs with lower priority</span>
+
+  <span class="kw">return</span> (
+    &lt;&gt;
+      &lt;input onChange={e => <span class="fn">setQuery</span>(e.target.value)} /&gt;
+      &lt;SearchResults query={deferredQuery} /&gt;
+    &lt;/&gt;
+  );
+}
+
+<span class="cm">// Option 2: Manual debounce with useCallback</span>
+<span class="kw">const</span> debouncedSearch = <span class="fn">useCallback</span>(
+  <span class="fn">debounce</span>((q) => <span class="fn">fetchResults</span>(q), <span class="num">300</span>), []
+);</div>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="improvement" id="imp6">
+      <div class="improvement-header" onclick="toggleImp('imp6')">
+        <span class="impact-badge med">Med Impact</span>
+        <span class="improvement-title">Fix CLS — Add Dimensions to Images</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>When images load without explicit dimensions, the browser doesn't reserve space — other content jumps when the image appears. This tanks your CLS score.</p>
+        <div class="before-after">
+          <div class="ba-panel">
+            <div class="ba-label before">⚠ Causes layout shift</div>
+            <code><pre>&lt;img src="product.jpg" /&gt;</pre></code>
+          </div>
+          <div class="ba-panel">
+            <div class="ba-label after">✓ Space reserved, no shift</div>
+            <code><pre>&lt;img
+  src="product.jpg"
+  width="400"
+  height="300"
+/&gt;</pre></code>
+          </div>
+        </div>
+        <p>Also fix: dynamically injected content (ads, banners) appearing above existing content. Use CSS <strong>min-height</strong> placeholders for async content.</p>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="improvement" id="imp7">
+      <div class="improvement-header" onclick="toggleImp('imp7')">
+        <span class="impact-badge low">Low Impact</span>
+        <span class="improvement-title">Preload Critical Resources</span>
+        <span class="improvement-toggle">▶</span>
+      </div>
+      <div class="improvement-body">
+        <p>Tell the browser to fetch critical assets early — before it discovers them in CSS or JS.</p>
+        <div class="code-block"><span class="cm">&lt;!-- In your &lt;head&gt; --&gt;</span>
+
+<span class="cm">&lt;!-- Preload the LCP image --&gt;</span>
+&lt;link rel=<span class="str">"preload"</span> as=<span class="str">"image"</span> href=<span class="str">"/hero.webp"</span> /&gt;
+
+<span class="cm">&lt;!-- Preload your primary font --&gt;</span>
+&lt;link rel=<span class="str">"preload"</span> as=<span class="str">"font"</span>
+  href=<span class="str">"/fonts/Inter.woff2"</span>
+  type=<span class="str">"font/woff2"</span> crossorigin /&gt;
+
+<span class="cm">&lt;!-- Preconnect to API domain --&gt;</span>
+&lt;link rel=<span class="str">"preconnect"</span> href=<span class="str">"https://api.yourapp.com"</span> /&gt;</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUNDLE OPTIMIZATION -->
+  <section id="bundleopt">
+    <div class="section-number">// phase 3 — bundle</div>
+    <h2>Analyzing &<br>Shrinking Your Bundle</h2>
+    <p class="section-desc">Use Bundle Analyzer to visualize exactly what's in your JavaScript — often you'll find surprises.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Install Bundle Analyzer (Vite)</h4>
+          <div class="code-block">npm install --save-dev rollup-plugin-visualizer</div>
+          <p>Add to vite.config.js:</p>
+          <div class="code-block"><span class="kw">import</span> { <span class="fn">visualizer</span> } <span class="kw">from</span> <span class="str">'rollup-plugin-visualizer'</span>;
+
+<span class="kw">export default</span> {
+  plugins: [
+    react(),
+    <span class="fn">visualizer</span>({ open: <span class="kw">true</span>, gzipSize: <span class="kw">true</span> })
+  ]
+}</div>
+          <p>Run <span class="pill">npm run build</span> — a visual treemap opens in the browser.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Common bundle bloat culprits</h4>
+          <p>In the treemap, look for unexpectedly large rectangles:</p>
+          <table style="margin-top:0.5rem;">
+            <tr><th>What you see</th><th>The fix</th></tr>
+            <tr><td>moment.js (500KB+)</td><td>Replace with date-fns or dayjs (&lt;5KB)</td></tr>
+            <tr><td>lodash (500KB)</td><td>Import specific functions: <code>import debounce from 'lodash/debounce'</code></td></tr>
+            <tr><td>All of react-icons</td><td>Import only what you use: <code>import { FiMenu } from 'react-icons/fi'</code></td></tr>
+            <tr><td>Unused routes/pages</td><td>Apply React.lazy() code splitting</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Enable compression on your server</h4>
+          <p>Gzip or Brotli compression can reduce JS by 60–80% over the wire. This is a server config, not a code change — but one of the highest-ROI improvements available. Check if your server/CDN has it enabled.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERIFY -->
+  <section id="verify">
+    <div class="section-number">// phase 4 — verify</div>
+    <h2>Measure Again &<br>Compare</h2>
+    <p class="section-desc">After applying fixes, re-profile with the exact same steps. Never trust feelings — trust numbers.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Re-run the same Performance recording</h4>
+          <p>Use the same throttling settings, same page state, same interaction. Compare: are the Long Task bars shorter? Are there fewer re-renders in the flame chart?</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Run Lighthouse before + after</h4>
+          <p>DevTools → <strong>Lighthouse</strong> tab → Generate report. Do this before your changes and after. The Performance score and individual metric values give you a clear before/after comparison.</p>
+          <div class="highlight-box">Run Lighthouse in incognito, with extensions disabled, at least 3 times and average the scores — results vary between runs.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Check Network panel totals</h4>
+          <p>After code splitting + image optimization, the <strong>JS transferred</strong> and <strong>total resources</strong> should be meaningfully smaller. You might go from 3MB to 800KB — that's visible in the summary bar.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Use web.dev/measure for real-world data</h4>
+          <p>If your app is deployed, run it through <strong>PageSpeed Insights</strong> (pagespeed.web.dev). This shows both lab data and real-world field data from Chrome users. Field data is the ultimate truth.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section id="checklist">
+    <div class="section-number">// phase 4 — done?</div>
+    <h2>Performance<br>Checklist</h2>
+    <p class="section-desc">Work through this list — click to check off items as you complete them.</p>
+
+    <ul class="checklist" id="checklist-list">
+      <li id="c1"><div class="check-box" onclick="toggleCheck('c1')"></div> <span>Record a baseline Performance profile (with CPU 4x throttle)</span></li>
+      <li id="c2"><div class="check-box" onclick="toggleCheck('c2')"></div> <span>Check Network tab — identify files over 500KB</span></li>
+      <li id="c3"><div class="check-box" onclick="toggleCheck('c3')"></div> <span>Install React DevTools — enable render highlighting</span></li>
+      <li id="c4"><div class="check-box" onclick="toggleCheck('c4')"></div> <span>Run Profiler — find components with excessive re-renders</span></li>
+      <li id="c5"><div class="check-box" onclick="toggleCheck('c5')"></div> <span>Add React.lazy() to route-level components</span></li>
+      <li id="c6"><div class="check-box" onclick="toggleCheck('c6')"></div> <span>Wrap expensive child components with React.memo()</span></li>
+      <li id="c7"><div class="check-box" onclick="toggleCheck('c7')"></div> <span>Add useMemo to expensive filter/sort computations</span></li>
+      <li id="c8"><div class="check-box" onclick="toggleCheck('c8')"></div> <span>Add useCallback to functions passed as props to memoized children</span></li>
+      <li id="c9"><div class="check-box" onclick="toggleCheck('c9')"></div> <span>Virtualize any list with 100+ items (react-virtual / react-window)</span></li>
+      <li id="c10"><div class="check-box" onclick="toggleCheck('c10')"></div> <span>Compress + convert images to WebP, add width/height attributes</span></li>
+      <li id="c11"><div class="check-box" onclick="toggleCheck('c11')"></div> <span>Add loading="lazy" to below-fold images</span></li>
+      <li id="c12"><div class="check-box" onclick="toggleCheck('c12')"></div> <span>Run Bundle Analyzer — replace moment.js / full lodash</span></li>
+      <li id="c13"><div class="check-box" onclick="toggleCheck('c13')"></div> <span>Confirm Gzip/Brotli compression is enabled on server</span></li>
+      <li id="c14"><div class="check-box" onclick="toggleCheck('c14')"></div> <span>Re-record Performance profile — compare Long Tasks</span></li>
+      <li id="c15"><div class="check-box" onclick="toggleCheck('c15')"></div> <span>Run Lighthouse before + after — confirm score improvement</span></li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script>
+  function toggleImp(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  function toggleCheck(id) {
+    const li = document.getElementById(id);
+    const box = li.querySelector('.check-box');
+    box.classList.toggle('checked');
+    li.classList.toggle('done');
+  }
+
+  // Highlight active nav on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
